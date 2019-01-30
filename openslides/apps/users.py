@@ -14,3 +14,18 @@ class CreateUser(Action, name="users/create_user"):
     async def execute(self, payload: Dict[str, Any]) -> None:
         all_data = all_data_var.get()
         all_data["users/user"].add_element({"username": payload["username"]})
+
+
+class UpdatePassword(Action, name="users/update_password"):
+    async def validate(self, payload: Dict[str, Any]) -> None:
+        all_data = all_data_var.get()
+        if "password" not in payload:
+            raise ValidationError("update_password needs a password")
+        if "id" not in payload:
+            raise ValidationError("no password given")
+        if payload["id"] not in all_data["users/user"]:
+            raise ValidationError(f"User with id `{payload['id']}` does not exist.")
+
+    async def execute(self, payload: Dict[str, Any]) -> None:
+        all_data = all_data_var.get()
+        all_data["users/user"][payload["id"]]["password"] = payload["password"]
