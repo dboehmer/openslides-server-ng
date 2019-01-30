@@ -19,12 +19,9 @@ class AllData(UserDict):
     Container for the all_data dict.
 
     Like a normal dict but with the method get_changed_elements.
-
-    Creates an copy of the initial dict.
     """
 
     def __init__(self, initialdata: Dict[str, CollectionType]) -> None:
-        initialdata = dict_copy(initialdata)
         for name, collection in initialdata.items():
             if isinstance(collection, dict):
                 initialdata[name] = Collection(collection)  # type: ignore
@@ -87,10 +84,3 @@ class Collection(UserDict):
         Returns the data of the collection as normal dict.
         """
         return self.data
-
-
-def dict_copy(input_dict: dict) -> dict:
-    """
-    Creates a copy of a dict.
-    """
-    return json.loads(json.dumps(input_dict))

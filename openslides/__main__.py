@@ -6,7 +6,7 @@ from .db import init_db
 from .websocket import serve
 
 
-installed_apps = ["core"]
+installed_apps = ["core", "users"]
 
 
 def init() -> None:

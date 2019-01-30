@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Dict
+from typing import Dict, Any
+from copy import deepcopy
 
 from .all_data import AllData, CollectionType
 
@@ -24,14 +25,21 @@ db_write_lock = asyncio.Lock()
 def init_db() -> None:
     DATABASE.clear()
     with open(DB_FILE) as file:
-        DATABASE.update(json.load(file))
+        database: Dict[str, Dict[int, Dict[str, Any]]] = {}
+        for collection, data in json.load(file).items():
+            database[collection] = {}
+            for item_id, element in data.items():
+                element["id"] = int(element["id"])
+                database[collection][int(item_id)] = element
+
+        DATABASE.update(database)
 
 
 async def get_all_data() -> AllData:
     """
     Returns an all_data dict for the current database.
     """
-    return AllData(DATABASE)
+    return AllData(await get_database())
 
 
 async def get_database() -> Dict[str, CollectionType]:
@@ -44,3 +52,10 @@ async def save_database(all_data: AllData) -> None:
     """
     DATABASE.clear()
     DATABASE.update(all_data.as_dict())
+
+
+def dict_copy(input_dict: dict) -> dict:
+    """
+    Creates a copy of a dict.
+    """
+    return deepcopy(input_dict)
