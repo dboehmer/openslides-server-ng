@@ -9,6 +9,7 @@ from mypy_extensions import TypedDict
 from .all_data import AllData
 from .autoupdate import inform_changed_elements
 from .db import db_write_lock, get_all_data, save_database
+from .utils import debug
 
 
 all_data_var: ContextVar[AllData] = ContextVar("all_data")
@@ -80,6 +81,7 @@ async def handle_actions(actions_data: List[ActionData]) -> None:
     all_data_var.set(all_data)
 
     for action_data in actions_data:
+        debug(f"handle action {action_data['action']} with payload {action_data['payload']}")
         action = Action.get_action(action_data["action"])
         await action.validate(action_data["payload"])
 

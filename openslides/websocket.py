@@ -10,9 +10,11 @@ import json
 from typing import Any, Dict, List, Set
 
 import websockets
+from collections import defaultdict
 
 from .actions import ActionData, ValidationError, handle_actions, prepare_actions
 from .db import get_database
+from .utils import debug
 
 
 class Client:
@@ -32,32 +34,43 @@ class Client:
         """
         Called when the websocket is opened.
         """
+        all_data: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for collection, data in (await get_database()).items():
+            for element in data.values():
+                all_data[collection].append(element)
+
         await self.send(
-            {"changed": await get_database(), "deleted": {}, "all_data": True}
+            {"type": "autoupdate", "changed": all_data, "deleted": {}, "all_data": True}
         )
 
-    async def recv(self, message: List[ActionData]) -> None:
+    async def recv(self, message: Dict[str, Any]) -> None:
         """
         Our demo handels all incomming data as action. It has to have the format
 
-        [
-            {
-                "action": "ACTION_NAME",
-                "payload": {
-                    "SOME": "DATA"
+        {
+            "id": "message_id",
+            "actions": [
+                {
+                    "action": "ACTION_NAME",
+                    "payload": {
+                        "SOME": "DATA"
+                    }
                 }
-            }
-        ]
+            ]
+        }
         """
-        action_data = await prepare_actions(message)
+        message_id = message["id"]
+        action_data = await prepare_actions(message["actions"])
         try:
             await handle_actions(action_data)
         except ValidationError as err:
-            await self.send({"error": str(err)})
+            await self.send({"type": "response", "error": str(err), "id": message_id})
+        else:
+            await self.send({"type": "response", "id": message_id})
 
     async def send(self, message: Dict[str, Any]) -> None:
         """
-        Sends data to the client. In this example, this is only autoupdate.
+        Sends data to the client.
         """
         await self.websocket.send(json.dumps(message))
 
@@ -74,6 +87,7 @@ class Client:
 async def handler(websocket: websockets.WebSocketServerProtocol, path: str) -> None:
     client = Client(websocket).__enter__()
     try:
+        debug(f"New connection, currently {len(Client.all_clients)} connected clients")
         await client.connected()
         async for message in websocket:
             await client.recv(json.loads(message))
@@ -81,6 +95,7 @@ async def handler(websocket: websockets.WebSocketServerProtocol, path: str) -> N
         pass
     finally:
         client.__exit__()
+        debug(f"Lost connection, currently {len(Client.all_clients)} connected clients")
 
 
 def serve(host: str, port: int) -> None:

@@ -13,7 +13,9 @@ class CreateUser(Action, name="users/create_user"):
 
     async def execute(self, payload: Dict[str, Any]) -> None:
         all_data = all_data_var.get()
-        all_data["users/user"].add_element({"username": payload["username"]})
+        all_data["users/user"].add_element({
+            "username": payload["username"], "created": payload["current_time"], "last_updated": payload["current_time"]
+        })
 
 
 class UpdatePassword(Action, name="users/update_password"):
@@ -28,4 +30,6 @@ class UpdatePassword(Action, name="users/update_password"):
 
     async def execute(self, payload: Dict[str, Any]) -> None:
         all_data = all_data_var.get()
-        all_data["users/user"][payload["id"]]["password"] = payload["password"]
+        user = all_data["users/user"][payload["id"]]
+        user["password"] = payload["password"]
+        user["last_updated"] = payload["current_time"]
