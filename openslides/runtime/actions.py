@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from contextvars import ContextVar
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Type
 
 from mypy_extensions import TypedDict
+
+from contextvars import ContextVar
 
 from .all_data import AllData
 from .autoupdate import inform_changed_elements
@@ -44,7 +45,7 @@ class Action:
         This is called before the database lock. So do not edit anything here.
         """
 
-    async def execute(self, payload: Dict[str, Any]) -> None:
+    async def execute(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """
         Method to manipulate the data.
         """
@@ -76,20 +77,21 @@ async def prepare_actions(
     return list(map(add_data, actions))
 
 
-async def handle_actions(actions_data: List[ActionData]) -> None:
+async def handle_actions(actions_data: List[ActionData]) -> List[Dict[str, Any]]:
     all_data = await get_all_data()
     all_data_var.set(all_data)
-
-    for action_data in actions_data:
-        debug(f"handle action {action_data['action']} with payload {action_data['payload']}")
-        action = Action.get_action(action_data["action"])
-        await action.validate(action_data["payload"])
+    return_values: List[Dict[str, Any]] = []
 
     async with db_write_lock:
         for action_data in actions_data:
+            debug(
+                f"handle action {action_data['action']} with payload {action_data['payload']}"
+            )
             action = Action.get_action(action_data["action"])
-            await action.execute(action_data["payload"])
+            await action.validate(action_data["payload"])
+            return_values.append(await action.execute(action_data["payload"]))
 
         await save_database(all_data)
 
     await inform_changed_elements(all_data)
+    return return_values

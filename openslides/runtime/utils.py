@@ -1,4 +1,4 @@
-from . import DEBUG
+DEBUG = True
 
 
 def debug(message: str) -> None:

@@ -1,31 +1,38 @@
-import websockets
-from typing import List, Dict, Any, Set
-from collections import defaultdict
+import asyncio
 import json
 import random
 import string
-import asyncio
+from collections import defaultdict
+from typing import Any, Dict, List, Optional
+
+import websockets
 
 
 class Client:
     __slots__ = {
-        "connection": websockets.WebSocketClientProtocol,
+        "connection": Optional[websockets.WebSocketClientProtocol],
         "store": Dict[str, Dict[int, Dict[str, Any]]],
-        "username": str,
+        "user_id": Optional[int],
         "current_requests": Dict[str, asyncio.Future],
     }
 
     def __init__(self) -> None:
         self.store: Dict[str, Dict[int, Dict[str, Any]]] = defaultdict(dict)
         self.current_requests: Dict[str, asyncio.Future] = {}
+        self.connection = None
+        self.user_id = None
 
     async def connect(self, address: str = "ws://localhost:8000") -> None:
         self.connection = await websockets.connect(address)
+        asyncio.create_task(self.handle_recv())
 
     async def disconnect(self) -> None:
-        await self.connection.close()
+        if self.connection is not None:
+            await self.connection.close()
 
     async def handle_recv(self) -> None:
+        if self.connection is None:
+            raise RuntimeError("Client not connected")
         try:
             async for raw_message in self.connection:
                 message = json.loads(raw_message)
@@ -54,20 +61,23 @@ class Client:
                     del self.store[collection][int(element_id)]
 
     async def recv_response(self, message: Dict[str, Any]) -> None:
-        message_id = message["id"]
+        message_id = message["response-id"]
         future = self.current_requests[message_id]
         if "error" in message:
             # When the future is awaited, this takes a very long time. I don't know
             # why
             future.set_exception(ValueError(message["error"]))
         else:
-            future.set_result(True)
+            future.set_result(message["responses"])
         del self.current_requests[message_id]
 
     async def send(self, actions: List[dict]) -> asyncio.Future:
         """
         only sends actions.
         """
+        if self.connection is None:
+            raise RuntimeError("Client not connected")
+
         message_id = get_message_id()
         while message_id in self.current_requests:
             message_id = get_message_id()
@@ -78,11 +88,24 @@ class Client:
         return future
 
     async def create_user(self, username: str) -> None:
-        action: dict = {"action": "users/create_user", "payload": {"username": username}}
-        response = await self.send([action])
-        await response
-        self.username = username
+        action: dict = {
+            "action": "users/create_user",
+            "payload": {"username": username},
+        }
+        response_waiter = await self.send([action])
+        response = await response_waiter
+        self.user_id = response[0]["id"]
+
+    async def set_password(self, password: str) -> None:
+        if self.user_id is None:
+            raise RuntimeError("User for client is not connected.")
+        action = {
+            "action": "users/update_password",
+            "payload": {"id": self.user_id, "password": password},
+        }
+        response_waiter = await self.send([action])
+        await response_waiter
 
 
 def get_message_id() -> str:
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=8))

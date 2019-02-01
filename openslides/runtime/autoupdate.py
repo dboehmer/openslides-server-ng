@@ -22,5 +22,10 @@ async def inform_changed_elements(all_data: AllData) -> None:
             deleted_elements[collection].append(item_id)
 
     await Client.send_to_all(
-        {"type": "autoupdate", "changed": changed_elements, "deleted": deleted_elements, "all_data": False}
+        {
+            "type": "autoupdate",
+            "changed": changed_elements,
+            "deleted": deleted_elements,
+            "all_data": False,
+        }
     )

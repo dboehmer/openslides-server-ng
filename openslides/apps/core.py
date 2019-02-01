@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from ..actions import Action, ValidationError, all_data_var
+from runtime.actions import Action, ValidationError, all_data_var
 
 
 def key_to_id(key: str) -> int:
@@ -24,6 +24,7 @@ class SetConfig(Action, name="core/set_config"):
         ]:
             ValidationError(f"unknown config variable {payload['key']}")
 
-    async def execute(self, payload: Dict[str, Any]) -> None:
+    async def execute(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         all_data = all_data_var.get()
         all_data["core/config"][key_to_id(payload["key"])]["value"] = payload["value"]
+        return {}

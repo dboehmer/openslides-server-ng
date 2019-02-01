@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Dict, Any
 from copy import deepcopy
+from typing import Any, Dict
 
 from .all_data import AllData, CollectionType
 

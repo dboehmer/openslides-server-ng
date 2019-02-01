@@ -7,12 +7,12 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections import defaultdict
 from typing import Any, Dict, List, Set
 
 import websockets
-from collections import defaultdict
 
-from .actions import ActionData, ValidationError, handle_actions, prepare_actions
+from .actions import ValidationError, handle_actions, prepare_actions
 from .db import get_database
 from .utils import debug
 
@@ -62,11 +62,19 @@ class Client:
         message_id = message["id"]
         action_data = await prepare_actions(message["actions"])
         try:
-            await handle_actions(action_data)
+            return_values = await handle_actions(action_data)
         except ValidationError as err:
-            await self.send({"type": "response", "error": str(err), "id": message_id})
+            await self.send(
+                {"type": "response", "error": str(err), "response-id": message_id}
+            )
         else:
-            await self.send({"type": "response", "id": message_id})
+            await self.send(
+                {
+                    "type": "response",
+                    "responses": return_values,
+                    "response-id": message_id,
+                }
+            )
 
     async def send(self, message: Dict[str, Any]) -> None:
         """

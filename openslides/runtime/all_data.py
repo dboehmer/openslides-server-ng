@@ -60,13 +60,14 @@ class Collection(UserDict):
             self.init_hashes[item_id] = hash(repr(element))
         super().__init__(initialdata)
 
-    def add_element(self, element: Element) -> None:
+    def add_element(self, element: Element) -> int:
         """
         Helper to add one element to the dict. Automaticly creates an id.
         """
         new_id = max(self) + 1
         element["id"] = new_id
         self[new_id] = element
+        return new_id
 
     def get_changed_elements(self) -> Generator[int, None, None]:
         """
