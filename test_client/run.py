@@ -1,7 +1,7 @@
 import asyncio
 from time import time
 
-from tests import connect_clients, create_users, set_password
+from client import connect_clients, create_users, set_password
 
 
 CLIENT_COUNT = 100
@@ -17,8 +17,8 @@ async def test() -> None:
     async with connect_clients(CLIENT_COUNT) as clients:
         log("create users.")
         await create_users(clients)
-        #log("set passwords for each user 10 times.")
-        #await set_password(clients, count=10)
+        log("set passwords for each user 10 times.")
+        await set_password(clients, count=10)
         log("all done. Disconnecting")
 
 

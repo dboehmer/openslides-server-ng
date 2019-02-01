@@ -4,7 +4,6 @@ Container classes to handle all_data
 
 from __future__ import annotations
 
-import json
 from collections import UserDict
 from typing import Any, Dict, Generator, Tuple
 
