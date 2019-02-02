@@ -7,9 +7,9 @@ You need python >= 3.7
   pip install -r requriements.txt
 
 
-## Run Server
+## Run Python Server
 
-  python openslides/run.py
+  python python/run.py
 
 
 ## Run test client
