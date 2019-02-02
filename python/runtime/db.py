@@ -10,27 +10,32 @@ Use get_all_data() and save_database() to handle the database.
 from __future__ import annotations
 
 import asyncio
-import json
 from copy import deepcopy
 from typing import Any, Dict
+
+import msgpack
 
 from .all_data import AllData, CollectionType
 
 
-DB_FILE = "all_data.json"
+DB_FILE = "all_data.msgpack"
 DATABASE: Dict[str, CollectionType] = {}
 db_write_lock = asyncio.Lock()
 
 
 def init_db() -> None:
+    """
+    Loads the database from file and save it into memory.
+
+    Use msgpack instead of json, because msgpack supports int-keys in dics.
+    """
     DATABASE.clear()
-    with open(DB_FILE) as file:
+    with open(DB_FILE, "rb") as file:
         database: Dict[str, Dict[int, Dict[str, Any]]] = {}
-        for collection, data in json.load(file).items():
+        for collection, data in msgpack.unpack(file, raw=False).items():
             database[collection] = {}
             for item_id, element in data.items():
-                element["id"] = int(element["id"])
-                database[collection][int(item_id)] = element
+                database[collection][item_id] = element
 
         DATABASE.update(database)
 
