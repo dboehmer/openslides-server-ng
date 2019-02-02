@@ -10,7 +10,6 @@ Use get_all_data() and save_database() to handle the database.
 from __future__ import annotations
 
 import asyncio
-from copy import deepcopy
 from typing import Any, Dict
 
 import msgpack
@@ -48,7 +47,7 @@ async def get_all_data() -> AllData:
 
 
 async def get_database() -> Dict[str, CollectionType]:
-    return DATABASE
+    return dict_copy(DATABASE)
 
 
 async def save_database(all_data: AllData) -> None:
@@ -63,4 +62,4 @@ def dict_copy(input_dict: dict) -> dict:
     """
     Creates a copy of a dict.
     """
-    return deepcopy(input_dict)
+    return msgpack.unpackb(msgpack.packb(input_dict), raw=True)
