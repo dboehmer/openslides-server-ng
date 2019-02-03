@@ -3,16 +3,42 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"sync"
 
 	"github.com/vmihailenco/msgpack"
 )
 
+const dbPath = "../all_data.msgpack"
+
 type element map[string]interface{}
 type collection map[int]element
 
-var database map[string]collection
+// ElementID reporesents an element in the database
+type ElementID struct {
+	Collection string
+	ID         int
+}
 
-const dbPath = "../all_data.msgpack"
+// AllDataType is a copy of the database + a list of changed elements
+type AllDataType struct {
+	Database        map[string]collection
+	ChangedElements []ElementID
+}
+
+func (allData *AllDataType) addElement(collection string, element map[string]interface{}) int {
+	newID := 0
+	for key := range allData.Database[collection] {
+		newID = max(newID, key)
+	}
+	newID++
+	element["id"] = newID
+	allData.Database[collection][newID] = element
+	allData.ChangedElements = append(allData.ChangedElements, ElementID{collection, newID})
+	return newID
+}
+
+var database map[string]collection
+var databaseWriteLock = sync.Mutex{}
 
 func init() {
 	content, err := ioutil.ReadFile(dbPath)
@@ -22,6 +48,18 @@ func init() {
 	if err = msgpack.Unmarshal(content, &database); err != nil {
 		log.Fatalf("Can not parse DB file: %s\n", err)
 	}
+}
+
+func getAllData() *AllDataType {
+	var allData AllDataType
+	allData.Database = getDatabase()
+	allData.ChangedElements = make([]ElementID, 0)
+	return &allData
+}
+
+func saveDatabase(allData *AllDataType) error {
+	database = allData.Database
+	return nil
 }
 
 func getDatabase() map[string]collection {

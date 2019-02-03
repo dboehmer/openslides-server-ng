@@ -130,7 +130,7 @@ async def connect_clients(count: int) -> AsyncGenerator[List[Client], None]:
 
 async def create_users(
     clients: List[Client],
-    username: Callable[[], str] = lambda: f"test-user-{randint(0, 1_000_000)}",
+    username: Callable[[], str] = lambda: f"test-user-{randint(0, 1_000_000_000)}",
 ) -> None:
     await asyncio.gather(*(client.create_user(username()) for client in clients))
 

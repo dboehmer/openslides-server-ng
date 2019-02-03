@@ -10,3 +10,10 @@ func debug(message string) {
 		fmt.Println(message)
 	}
 }
+
+func max(a int, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}

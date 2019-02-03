@@ -30,7 +30,7 @@ class UpdatePassword(Action, name="users/update_password"):
         if "password" not in payload:
             raise ValidationError("update_password needs a password")
         if "id" not in payload:
-            raise ValidationError("no password given")
+            raise ValidationError("update_passwod needs a user id")
         if payload["id"] not in all_data["users/user"]:
             raise ValidationError(f"User with id `{payload['id']}` does not exist.")
 
