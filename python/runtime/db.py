@@ -62,4 +62,4 @@ def dict_copy(input_dict: dict) -> dict:
     """
     Creates a copy of a dict.
     """
-    return msgpack.unpackb(msgpack.packb(input_dict), raw=True)
+    return msgpack.unpackb(msgpack.packb(input_dict), raw=False)
