@@ -10,28 +10,26 @@ server and sends write requests.
 
 You need python >= 3.7
 
-  pip install -r requriements.txt
+    pip install -r requriements.txt
 
 
 ## Run Python Server
 
-  python python/run.py
+    python python/run.py
 
 
 ## Run Go Server
 
-  cd go
-  go build && ./openslides-server
+    cd go
+    go build && ./openslides-server
 
 
 ## Run test client
 
 
-  python test_client/run.py
+    python test_client/run.py
 
 
-You can use the firefox addon
-
-  https://addons.mozilla.org/de/firefox/addon/browser-websocket-client/
-
+You can use the Firefox Add-on
+[Browser WebSocket Client](https://addons.mozilla.org/de/firefox/addon/browser-websocket-client/)
 to test the server.
